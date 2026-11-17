@@ -1,6 +1,6 @@
 [package]
 name = "filament-walk"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 rust-version = "1.98"
 description = "The shared no_std walker toolkit -- an explicit heap stack of typed frames with enter and exit callbacks, and an arena that stores each node after its children."
@@ -18,7 +18,7 @@ path = "src/lib.rs"
 [dependencies]
 
 [dev-dependencies]
-ix-trace-rs = { git = "https://github.com/agent-ix/ix-trace-rs", branch = "main" }
+ix-trace-rs = { git = "https://github.com/agent-ix/ix-trace-rs", tag = "v0.1.2" }
 serde_json = "1"
 
 [profile.release]
