@@ -21,6 +21,8 @@ help:
 	@echo "  make build            - Release build"
 	@echo "  make clean            - cargo clean"
 	@echo "  make deny             - cargo deny check"
+	@echo "  make trace            - Regenerate docs/trace/lib-example.json from the real walk"
+	@echo "  make trace-check      - Fail when the committed walk trace is stale"
 	@echo "  make docs             - cargo doc, denying missing/broken doc links"
 	@echo "  make ci               - All CI gates locally (fmt-check + lint + test + build-no-std + deny + docs)"
 
@@ -83,12 +85,23 @@ cargo-audit:
 # cargo doc is a separate lint pass from clippy: rustdoc-only lints such as
 # rustdoc::broken_intra_doc_links only fire here, never under `make lint`.
 .PHONY: docs
-docs:
+docs: trace-check
 	RUSTDOCFLAGS="-D warnings" $(CARGO) doc --no-deps --all-features
 
 # =============================================================================
 # Composite
 # =============================================================================
+
+# docs/trace/lib-example.json is the walk event trace of the `src/lib.rs` example tree,
+# written by the walker itself (`walk_traced`) and read by the `order` figure.
+# `trace` rewrites it; `trace-check` fails when the committed record is stale.
+.PHONY: trace
+trace:
+	FILAMENT_WALK_REGENERATE=1 $(CARGO) test --test it lib_example_trace
+
+.PHONY: trace-check
+trace-check:
+	$(CARGO) test --test it lib_example_trace
 
 .PHONY: ci
 ci: fmt-check lint test build-no-std deny docs
@@ -106,5 +119,5 @@ figures:
 	$(IXD) build docs/images/figures.json --out docs/images
 
 .PHONY: figures-check
-figures-check:
+figures-check: trace-check
 	$(IXD) build docs/images/figures.json --out docs/images --check
