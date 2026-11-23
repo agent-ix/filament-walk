@@ -99,6 +99,8 @@ independent of call depth.
   <img alt="A walk of the tree where node 0 has children 1 and 2 and node 2 has child 3 enters 0, 1, 2, 3 and exits 1, 3, 2, 0: each node is entered before its children and exited after all of them. The heap stack holds at most three tasks." src="docs/images/order-light.svg">
 </picture>
 
+The step and stack-size trace in this figure is the trace of the example above, typed into `docs/images/figures.json` (`order` figure) because no producer emits it; it is a documented exception to FR-010 tracked by IXD-57 and must be updated with the example.
+
 A walk over several kinds of node, such as expressions that hold types and types
 that hold expressions, declares an enum for `Node` and one for `Frame`, with a
 variant per kind, so each level carries a frame of its own kind.
