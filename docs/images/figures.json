@@ -1,0 +1,52 @@
+{
+  "figures": [
+    {
+      "id": "hero",
+      "width": 980, "height": 330,
+      "label": "Native recursion keeps one call frame per level of the input, so a 100,000-level tree overflows a 512 KiB stack. filament-walk keeps one typed frame per level on a heap stack and runs enter and exit callbacks from a loop, so native stack use stays constant.",
+      "items": [
+        {"k":"text","at":[0,12],"text":"RECURSION · ONE CALL FRAME PER LEVEL","role":"muted","size":12},
+        {"k":"text","at":[540,12],"text":"WALK · ONE TYPED FRAME PER LEVEL, ON THE HEAP","role":"muted","size":12},
+        {"k":"box","at":[0,28,250,50],"role":"ink","title":"visit(node)","subs":["level 1 · on the call stack"]},
+        {"k":"box","at":[0,86,250,50],"role":"ink","title":"visit(node)","subs":["level 2 · on the call stack"]},
+        {"k":"box","at":[0,144,250,50],"role":"ink","title":"visit(node)","subs":["level 3 · on the call stack"]},
+        {"k":"text","at":[125,214],"text":"…  100,000 levels","role":"muted","size":12,"anchor":"middle"},
+        {"k":"box","at":[0,226,250,50],"role":"evidence","title":"stack overflow","subs":["512 KiB thread"]},
+        {"k":"line","points":[[250,251],[290,251]],"role":"evidence","weight":2.4},
+        {"k":"text","at":[298,255],"text":"the process aborts","role":"evidence"},
+        {"k":"box","at":[540,28,200,62],"role":"code","title":"your Walk impl","subs":["enter(node, children)","exit(frame)"]},
+        {"k":"line","points":[[740,59],[790,59]],"role":"code"},
+        {"k":"box","at":[793,28,187,62],"role":"logic","title":"walk(&mut w, root)","subs":["a loop, no recursion"]},
+        {"k":"text","at":[540,124],"text":"HEAP STACK OF TASKS","role":"muted","size":12},
+        {"k":"box","at":[540,134,120,50],"role":"model","title":"Enter(child)","subs":["still to visit"]},
+        {"k":"box","at":[672,134,120,50],"role":"model","title":"Enter(child)","subs":["still to visit"]},
+        {"k":"box","at":[804,134,176,50],"role":"model","title":"Exit(frame)","subs":["your frame, kept"]},
+        {"k":"line","points":[[886,90],[886,131]],"role":"logic"},
+        {"k":"box","at":[540,226,440,50],"role":"logic","title":"native stack use: constant","subs":["same at depth 10 or 100,000"]},
+        {"k":"line","points":[[760,184],[760,223]],"role":"logic","arrow":false},
+        {"k":"legend","at":[0,324],"entries":[["code","authored source","box"],["logic","compiler stage","box"],["model","checked package / IR","box"],["evidence","outcome","box"],["ink","native call stack","box"]]}
+      ]
+    },
+    {
+      "id": "arena",
+      "width": 980, "height": 236,
+      "label": "An Arena stores each node after its children, so a node's children always have lower positions. Arena::bottom_up visits the nodes once, in order, and each node reads its children's finished results: no stack and no recursion.",
+      "items": [
+        {"k":"text","at":[0,12],"text":"STORED IN PUSH ORDER · CHILDREN BEFORE PARENTS","role":"muted","size":12},
+        {"k":"box","at":[0,74,150,56],"role":"model","title":"node 0","subs":["leaf"]},
+        {"k":"box","at":[208,74,150,56],"role":"model","title":"node 1","subs":["leaf"]},
+        {"k":"box","at":[415,74,150,56],"role":"model","title":"node 2","subs":["add(0, 1)"]},
+        {"k":"box","at":[622,74,150,56],"role":"model","title":"node 3","subs":["leaf"]},
+        {"k":"box","at":[830,74,150,56],"role":"model","title":"node 4","subs":["add(2, 3)"]},
+        {"k":"line","points":[[75,71],[75,40],[500,40],[500,71]],"role":"faint"},
+        {"k":"line","points":[[282,71],[282,50],[480,50],[480,71]],"role":"faint"},
+        {"k":"line","points":[[520,71],[520,40],[915,40],[915,71]],"role":"faint"},
+        {"k":"line","points":[[698,71],[698,50],[895,50],[895,71]],"role":"faint"},
+        {"k":"text","at":[0,170],"text":"ONE FORWARD LOOP · bottom_up(compute)","role":"muted","size":12},
+        {"k":"box","at":[0,180,980,50],"role":"logic","title":"result[i] = compute(node i, results 0 … i-1)","subs":["no stack: every child's result is already there"]}
+      ]
+    },
+    {"id":"ecosystem","construct":{"name":"ecosystem","here":"filament-walk"}}
+  ]
+}
+
