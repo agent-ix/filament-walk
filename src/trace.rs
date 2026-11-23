@@ -153,7 +153,10 @@ impl<N, L: FnMut(&N) -> usize> Probe<N> for Recorder<L> {
     }
 
     fn exited(&mut self, tasks: usize) {
-        let node = self.open.pop().unwrap_or(self.current);
+        let node = self
+            .open
+            .pop()
+            .expect("every exit pairs with an earlier enter");
         self.trace.events.push(Event {
             kind: Kind::Exit,
             node,

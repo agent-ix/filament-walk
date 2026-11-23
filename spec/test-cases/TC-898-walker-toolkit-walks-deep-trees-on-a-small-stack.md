@@ -14,7 +14,7 @@ Verify that the walker toolkit `filament-walk` is a `no_std` shared leaf, that i
 every node of a 100,000-deep tree in order with typed frames, that a stop
 ends the walk, and that arena order computes bottom-up with no stack.
 
-Scope: FR-356-AC-1, FR-356-AC-2, FR-356-AC-3, FR-356-AC-5, FR-356-AC-6.
+Scope: FR-356-AC-1, FR-356-AC-2, FR-356-AC-3, FR-356-AC-5, FR-356-AC-6, FR-356-AC-7.
 
 ## Test Procedure
 
@@ -37,7 +37,9 @@ Run steps 2 to 6 on a thread spawned with a 512 KiB stack.
    request and each allocator request.
 8. Walk it again with a reservation that admits exactly the total of step 7.
 9. Walk it with every smaller total, and walk a 100,000-deep chain on a
-   512 KiB thread with the exact total and with one byte less.
+. Walk the `src/lib.rs` example tree with `walk_traced`, compare the JSON
+    with `docs/trace/lib-example.json`, check its field list, and walk a tree
+    whose enter stops the walk at node 2.
 
 ## Expected Results
 
@@ -53,7 +55,9 @@ Run steps 2 to 6 on a thread spawned with a 512 KiB stack.
 - Step 9: each smaller total is refused with no visit after the denial, no
   extra allocator request and no live byte left; the chain completes with
   the exact total and is refused with one byte less.
+- Step 10: the committed record equals the fresh trace, its fields are
+  exactly the versioned list, and the stopping enter records no event.
 
 ## Status
 
-Implemented. Step 1 is backed by `make build-no-std` and `tests/it/leaf.rs`; steps 2 to 6 by `tests/it/deep.rs`; steps 7 to 9 by `tests/reserved.rs`.
+Implemented. Step 1 is backed by `make build-no-std` and `tests/it/leaf.rs`; steps 2 to 6 by `tests/it/deep.rs`; steps 7 to 9 by `tests/reserved.rs`; step 10 by `tests/it/trace.rs`.

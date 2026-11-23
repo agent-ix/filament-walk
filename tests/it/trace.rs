@@ -6,6 +6,7 @@ use core::ops::ControlFlow;
 use std::path::Path;
 
 use filament_walk::{walk_traced, Children, Kind, Trace, Walk, TRACE_SCHEMA};
+use ix_trace_rs::trace;
 
 /// The committed trace of the `src/lib.rs` example tree.
 const RECORD: &str = "docs/trace/lib-example.json";
@@ -38,6 +39,7 @@ fn lib_example() -> Trace {
     trace
 }
 
+#[trace("TC-898", "FR-356-AC-7")]
 #[test]
 fn lib_example_trace_matches_the_committed_record() {
     let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(RECORD);
@@ -52,6 +54,7 @@ fn lib_example_trace_matches_the_committed_record() {
     );
 }
 
+#[trace("TC-898", "FR-356-AC-7")]
 #[test]
 fn trace_orders_enters_and_exits_with_task_counts() {
     let events = lib_example().events;
@@ -79,6 +82,7 @@ fn trace_orders_enters_and_exits_with_task_counts() {
 
 /// The record's field list is the contract the figure reads; a removed or
 /// renamed field fails here.
+#[trace("TC-898", "FR-356-AC-7")]
 #[test]
 fn trace_record_field_list_is_versioned_and_fixed() {
     let record: serde_json::Value = serde_json::from_str(&lib_example().to_json()).expect("JSON");
@@ -104,4 +108,40 @@ fn trace_record_field_list_is_versioned_and_fixed() {
         assert!(matches!(event["event"].as_str(), Some("enter" | "exit")));
         assert!(event["node"].is_u64() && event["tasks"].is_u64() && event["children"].is_array());
     }
+}
+
+/// An enter that stops the walk records no event, and the events before it
+/// stay.
+#[trace("TC-898", "FR-356-AC-7")]
+#[test]
+fn early_stop_records_no_event_for_the_stopping_enter() {
+    struct Stop<'a>(&'a Tree);
+
+    impl Walk for Stop<'_> {
+        type Node = usize;
+        type Frame = usize;
+        type Stop = usize;
+
+        fn enter(
+            &mut self,
+            node: usize,
+            children: &mut Children<'_, usize>,
+        ) -> ControlFlow<usize, usize> {
+            if node == 2 {
+                return ControlFlow::Break(node);
+            }
+            children.extend(self.0 .0[node].iter().copied());
+            ControlFlow::Continue(node)
+        }
+
+        fn exit(&mut self, _frame: usize) -> ControlFlow<usize> {
+            ControlFlow::Continue(())
+        }
+    }
+
+    let tree = Tree(vec![vec![1, 2], vec![], vec![3], vec![]]);
+    let (flow, trace) = walk_traced(&mut Stop(&tree), 0, |node| *node);
+    assert_eq!(flow, ControlFlow::Break(2));
+    let steps: Vec<(Kind, usize)> = trace.events.iter().map(|e| (e.kind, e.node)).collect();
+    assert_eq!(steps, [(Kind::Enter, 0), (Kind::Enter, 1), (Kind::Exit, 1)]);
 }

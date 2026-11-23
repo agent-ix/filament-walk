@@ -6,7 +6,8 @@
     "events": {"from":"json","path":"docs/trace/lib-example.json","pointer":"/events","raw":true},
     "enters": {"from":"expr","value":"join(pluck(where(events, 'event', 'enter'), 'node'), ', ')"},
     "exits": {"from":"expr","value":"join(pluck(where(events, 'event', 'exit'), 'node'), ', ')"},
-    "peak": {"from":"expr","value":"max(pluck(events, 'tasks'))"}
+    "peak": {"from":"expr","value":"max(pluck(events, 'tasks'))"},
+    "named": {"from":"expr","value":"join(flatten(pluck(events, 'children')), ', ')"}
   },
   "figures": [
     {
@@ -58,14 +59,16 @@
     {
       "id": "order",
       "width": 980, "height": 330,
-      "label": "A walk of the tree where node 0 has children 1 and 2 and node 2 has child 3 enters {enters} and exits {exits}: each node is entered before its children and exited after all of them. The heap stack holds at most {peak} tasks.",
+      "label": "A walk of the tree enters {enters} and exits {exits}: each node is entered before its children and exited after all of them. Over the walk the enters name the children {named}, in that order. The heap stack holds at most {peak} tasks.",
       "items": [
-        {"k":"text","at":[0,12],"text":"TREE: 0 → (1, 2) · 2 → (3)","role":"muted","size":12},
+        {"k":"repeat","over":"events","items":[
+          {"k":"text","at":["=i * 122",12],"text":"=join([str(row.node), ' → (', join(row.children, ', '), ')'], '')","role":"muted","size":12,"when":"=len(row.children) > 0"}
+        ]},
         {"k":"repeat","over":"events","items":[
           {"k":"box","at":["=i * 122",28,110,56],"role":"=if(row.event == 'enter', 'logic', 'model')","title":"=join([row.event, str(row.node)], ' ')","subs":["=if(len(row.children) > 0, join(['push ', join(row.children, ', ')], ''), if(row.event == 'enter', 'leaf', 'frame back'))"]}
         ]},
         {"k":"text","at":[0,124],"text":"TASKS ON THE HEAP STACK AFTER EACH STEP","role":"muted","size":12},
-        {"k":"columns","at":[0,134,980,180],"values":"=pluck(events, 'tasks')","labels":"=zip_join(pluck(events, 'event'), pluck(events, 'node'), ' ')","ticks":[0,1,2,3],"role":"=replace(replace(pluck(events, 'event'), 'enter', 'logic'), 'exit', 'model')"}
+        {"k":"columns","at":[0,134,980,180],"values":"=pluck(events, 'tasks')","labels":"=zip_join(pluck(events, 'event'), pluck(events, 'node'), ' ')","ticks":"=range(peak + 1)","role":"=replace(replace(pluck(events, 'event'), 'enter', 'logic'), 'exit', 'model')"}
       ]
     },
     {"id":"ecosystem","construct":{"name":"ecosystem","here":"filament-walk"}}
