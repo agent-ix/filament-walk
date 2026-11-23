@@ -6,6 +6,20 @@ use core::ops::ControlFlow;
 
 use crate::reservation::{grow, Refusal, Reservation, Unlimited};
 
+/// Observer of the traversal loop; `()` observes nothing.
+pub(crate) trait Probe<N> {
+    /// A node is about to be entered.
+    fn before_enter(&mut self, _node: &N) {}
+    /// The node just entered named these children, in entry order.
+    fn entered(&mut self, _children: &[N]) {}
+    /// The enter finished and the task stack holds `tasks` entries.
+    fn stepped(&mut self, _tasks: usize) {}
+    /// A node was exited and the task stack holds `tasks` entries.
+    fn exited(&mut self, _tasks: usize) {}
+}
+
+impl<N> Probe<N> for () {}
+
 /// A top-down or mutually recursive walk, run by [`walk`] on an explicit
 /// heap stack.
 ///
@@ -177,6 +191,16 @@ pub fn walk_reserved<W: Walk + ?Sized>(
     root: W::Node,
     reservation: &mut dyn Reservation,
 ) -> Result<ControlFlow<W::Stop>, Refusal> {
+    drive(walker, root, reservation, &mut ())
+}
+
+/// The one traversal loop behind [`walk_reserved`] and [`crate::walk_traced`].
+pub(crate) fn drive<W: Walk + ?Sized, P: Probe<W::Node>>(
+    walker: &mut W,
+    root: W::Node,
+    reservation: &mut dyn Reservation,
+    probe: &mut P,
+) -> Result<ControlFlow<W::Stop>, Refusal> {
     let mut tasks: Vec<Task<W::Node, W::Frame>> = Vec::new();
     grow(reservation, &mut tasks, 1)?;
     tasks.push(Task::Enter(root));
@@ -188,6 +212,7 @@ pub fn walk_reserved<W: Walk + ?Sized>(
     while let Some(task) = tasks.pop() {
         match task {
             Task::Enter(node) => {
+                probe.before_enter(&node);
                 let entered = walker.enter(
                     node,
                     &mut Children {
@@ -207,14 +232,17 @@ pub fn walk_reserved<W: Walk + ?Sized>(
                 // refusal leaves `tasks` untouched.
                 grow(reservation, &mut tasks, 1 + pending.len())?;
                 tasks.push(Task::Exit(frame));
+                probe.entered(&pending);
                 while let Some(child) = pending.pop() {
                     tasks.push(Task::Enter(child));
                 }
+                probe.stepped(tasks.len());
             }
             Task::Exit(frame) => {
                 if let ControlFlow::Break(stop) = walker.exit(frame) {
                     return Ok(ControlFlow::Break(stop));
                 }
+                probe.exited(tasks.len());
             }
         }
     }

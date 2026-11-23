@@ -4,3 +4,4 @@
 
 mod deep;
 mod leaf;
+mod trace;

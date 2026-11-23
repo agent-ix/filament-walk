@@ -28,6 +28,7 @@ Backported from `agent-ix/ecaz`:
 
 ```
 src/lib.rs             # crate root
+docs/trace/            # walk event-trace records (filament-walk.trace/v1) the figures read
 tests/integration.rs   # end-to-end tests
 benches/               # criterion benchmarks (opt-in; add criterion to dev-deps)
 spec/                  # requirements artifacts (from /spec-create-spec)

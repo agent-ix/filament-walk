@@ -17,6 +17,10 @@
 //! [`Reservation`] for the exact bytes of every growth of the heap stack
 //! before it happens and returns the [`Refusal`] instead of walking on.
 //!
+//! [`walk_traced`] runs a walk and returns its ordered enter and exit events as
+//! a [`Trace`], whose JSON form (`filament-walk.trace/v1`) records each
+//! event's node, named children and heap stack size.
+//!
 //! The crate depends on `core` and `alloc` only and has no features, so any
 //! `no_std` crate can depend on it without feature unification pulling in
 //! anything else.
@@ -77,6 +81,7 @@ extern crate alloc;
 
 mod arena;
 mod reservation;
+mod trace;
 mod walker;
 
 #[cfg(kani)]
@@ -84,4 +89,5 @@ mod proofs;
 
 pub use arena::{Arena, Computed, Id, Results};
 pub use reservation::{Denied, Refusal, Reservation};
+pub use trace::{walk_traced, Event, Kind, Trace, TRACE_SCHEMA};
 pub use walker::{walk, walk_reserved, Children, Walk};
